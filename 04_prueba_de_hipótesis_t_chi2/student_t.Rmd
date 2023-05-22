@@ -1,0 +1,325 @@
+---
+title: "Hypothesis Tesing: Student T"
+output:
+  html_document:
+    css: ../lab.css
+    highlight: pygments
+    theme: cerulean
+    toc: true
+    toc_float: true
+---
+
+```{r echo = FALSE, message=FALSE}
+
+knitr::opts_chunk$set(warning = FALSE, eval = TRUE, results = TRUE, fig.show = "hold", message = FALSE)
+library(tidyverse)
+library(hrbrthemes)
+library(knitr)
+library(kableExtra)
+```
+
+In this lab, you will learn how to perform single-sample hypothesis testing using Student's t-distribution. The t-distribution is a probability distribution that arises in hypothesis testing when the sample size is small or the population standard deviation is unknown.
+
+## Single Sample t-test
+
+### The data
+
+Suppose you are interested in studying the average height of students at your university. You randomly select 20 students and measure their height in inches. The data are as follows:
+
+```{r}
+
+heights <- c(66, 65, 69, 70, 71, 67, 68, 65, 64, 72, 70, 67, 65, 68, 69, 71, 70, 67, 65, 68)
+
+```
+
+### Setting up the hypothesis test
+
+To perform a hypothesis test, you need to specify a null hypothesis and an alternative hypothesis. The null hypothesis typically represents the status quo, and the alternative hypothesis represents what you are trying to show to be true. In this case, you want to test whether the average height of students at your university is different from the national average height of 69 inches. You can state the null and alternative hypotheses as follows:
+
+- Null hypothesis: The population mean height of students at your university is equal to the national average (69 inches).
+- Alternative hypothesis: The population mean height of students at your university is not equal to the national average (69 inches).
+
+### Checking the assumptions
+
+Before conducting the hypothesis test, you need to check whether the sample data are approximately normally distributed. You can use a histogram and a normal probability plot to assess the normality assumption.
+
+```{r}
+ggplot(data = data.frame(heights), aes(x = heights)) +
+  geom_histogram(aes(y = ..density..), bins = 8, color = "black", fill = "white") +
+  geom_density(color = "red", lwd = 1.5) +
+  labs(title = "Histogram of Heights", x = "Height (inches)", y = "Density") +
+  theme_ipsum()
+```
+
+```{r}
+ggplot(data = data.frame(heights), aes(sample = heights)) +
+  stat_qq(color = "red") +
+  stat_qq_line(color = "blue") +
+  labs(title = "Normal Probability Plot of Heights", x = "Theoretical Quantiles", y = "Sample Quantiles") + theme_ipsum()
+```
+
+Based on the histogram and normal probability plot, the data appear to be approximately normally distributed.
+
+### Hypothesis testing method 1: Building Confidence Intervals
+
+The first method involves taking the statistic of interest (in this case the sample mean) and adding to each side of it an interval calculated multiplying a t critical value times the standard error of the sample:
+
+$$\overline{x}±t_{df}SE_{\overline{x}} = \overline{x}±t_{df}\frac{s}{\sqrt{n}}$$
+  
+```{r, echo = TRUE}
+
+# use the value qt i.e. quantiles of t distribution instead of a t-table 
+
+upper_threshold <- mean(heights) + (qt(0.025, df = length(heights) - 1, lower.tail = F) * (sd(heights) / sqrt(length(heights))))
+lower_threshold <- mean(heights) - (qt(0.025, df = length(heights) - 1, lower.tail = F) * (sd(heights) / sqrt(length(heights))))
+
+paste("At a 95% confidence level we can assert that the mean of the university students falls between",lower_threshold, "and", upper_threshold,"Therefore at a 95% confidence level we reject the null hypothesis which states there's no difference between the university average height and the national avergae given the interval does not contain 69 inches, which is the national average. There is a significant difference between the average university height and the national height.")
+
+```
+
+### Hypothesis testing method 2: t-statistic and p-values
+
+First we must calculate the test statistic, which is to say to normalise the raw statistic value by the t-distribution parameters:
+
+```{r, echo = TRUE}
+
+# [sample mean / null hypothesis value] / Standard Error
+
+t_stat <- (mean(heights) - 69) / (sd(heights) / sqrt(length(heights)))
+paste('The normalised vaue of the mean of heights of the sample-or t statistic is', t_stat)
+
+```
+
+p-values are calculated depending on how the hypothesis test is set up (i.e. phrased). The null hypothesis states there is no difference between the mean and population statistics. The alternative hypothesis can be stated as the sample statistic being smaller, larger or different from that of the population.
+  
+Below are the different ways in which the alternate hypothesis can be phrased and the entailing relations that ought to exist between the values of the t-statistic (upper or lower tailed, or two-sided) and the p-value:
+
+* Ha: sample mean < population mean; then P < t (lower tailed)
+* Ha: sample mean != population mean; then P > |t| (two tailed)
+* Ha: sample mean > population mean; then P > t (upper tailed)
+
+<center> 
+
+![](./tails.png)
+
+</center>
+  
+Remember, the p-value is the area under the curve beyond the point where the t-statistic falls in the t distribution with n-1 degrees of freedom. It should be smaller than the chosen alpha or significance level (typically 0.05 or 0.01) to be able to say that the probability of observing a value equal or more extreme than the observed sample mean is "small enough" to be "sure enough" to reject the null hypothesis.
+  
+Our alternative hypothesis is that the average height of the population is different to that of the sample, therefore we use a two-sided tail hypothesis test (hence p is multiplied by 2):
+  
+```{r, echo = TRUE}
+
+# p-value is calculated using the function pt, the function to calculate the density or area under the curve of a t distribution
+
+# two-sided both tails:
+two_sided_p_val <- 2 * pt(abs(t_stat), df = length(heights) - 1, lower.tail = FALSE)
+
+# one-side lower-tail only:
+lower_tail_p_val <-  pt(t_stat, df = length(heights) - 1, lower.tail = TRUE)
+
+# one-side upper-tail only:
+upper_tail_pval <- pt(t_stat, df = length(heights) - 1, lower.tail = FALSE)
+
+paste('two sided p-value:', two_sided_p_val)
+paste('lower-tailed p-value',lower_tail_p_val)
+paste('upper-tailed p-value:',upper_tail_pval)
+
+```
+
+
+### Interpreting the results
+
+The test statistic is -2.171765, and the p-value is 0.0427406. The p-value is smaller than 0.05, which means it is unlikely that the difference between the mean of the university and the national average was observed by chance with a degree of certainty of 95% We reject the null hypothesis which states there is no difference between the university and the national average.
+
+### Recap: T vs Normal Distributions
+
+Recall that as degrees of freedom increase, the t-distribution approaches a normal curve. With lower degrees of freedom, the t-distribution has higher tails than the normal distribution and its peak is lower. This means the t-distribution is more conservative as more observations are likely to occur two standard deviations away from the mean. This is meant to correct for the fact that the standard deviation of the population is unknown. Imagine the statistic of interest was 2 (t-stat or z-stat 2 standard deviations away from the mean):
+  
+```{r, echo = TRUE}
+
+paste('p-value with normal distribution:', pnorm(2, lower.tail=F) * 2)
+paste('p-value with t distribution 50 df', pt(2, df = 50, lower.tail = F) * 2)
+paste('p-value with t distribution 10 df', pt(2, df = 10, lower.tail = F) * 2)
+
+```
+
+## Two-Sample t-test
+
+A two sample t-test where two samples are compared can also be used. A paired t-test is used when we are interested in the difference between two variables which are non-independent from each other (i.e. two observations on related attributes of the same subject), whereas an un-paired t-test is done when we want to compare variables which are independent from each other. 
+  
+The two variables may be separated by time. For example, in the Dixon and Massey data set we have cholesterol levels in 1952 and cholesterol levels in 1962 for each subject. We may be interested in the difference in cholesterol levels between these two time points. However, sometimes the two variables are separated by something other than time. For example, subjects with a torn ACL  indicator may be asked to balance on their leg with the torn ACL and then to balance again on their leg without the torn ACL. Then, for each subject, we can then calculate the difference in balancing time between the two legs.
+
+### Example of paired data: Happiness Before and After Statistics Class
+
+We want to know whether the average happiness of the population increases after statistics class. We don't have access to the whole population so we will focus on a sample which is our class. We recorded happiness levels before and after stats class for the same students. We created a variable which holds the difference in happiness levels before and after:
+
+```{r}
+
+before <- c(12.2, 14.6, 13.4, 11.2, 12.7, 10.4, 15.8, 13.9, 9.5, 14.2)
+after <- c(13.5, 15.2, 13.6, 12.8, 13.7, 11.3, 16.5, 13.4, 8.7, 14.6)
+
+h_data <- tibble(
+  subject = 1:length(before),
+  before = before,
+  after = after
+) %>% 
+  mutate(diff = after - before) 
+
+kable(
+h_data %>% head,
+    "html") %>%
+  kable_styling(font_size = 10,
+                "striped") %>%
+  scroll_box(width="100%")
+
+```
+
+### Data Viz
+  
+```{r, warning=FALSE, message=FALSE, out.width="50%", fig.show='hold'}
+
+tibble(
+  subject = 1:length(before),
+  before = before,
+  after = after
+) %>%
+  pivot_longer(cols = c('before','after'),
+               values_to = 'happiness',
+               names_to = 'time') %>% 
+  ggplot(aes(x= time, y=happiness)) +
+  geom_boxplot(notch=T, fill = c("#003C67FF", "#EFC000FF"),alpha=0.8) +
+  theme_ipsum() +
+  theme(
+    legend.position = 'None'
+  )
+
+h_data %>% 
+  ggplot(aes(diff)) +
+  geom_histogram(bins=5, fill = "#003C67FF") +
+  theme_ipsum()
+
+
+```
+### Setting up the test
+  
+Parameter of interest: the difference in all students: $$\mu_{diff}$$
+Point estimate: the difference in sampled students: $$\overline{x}_{diff}$$
+Null Hypothesis (i.e. the  : $$\mu_{diff} = 0$$  
+Alternative Hypothesis: $$\mu_{diff} ≠ 0$$    
+Test statistic: $$t=\frac{\overline{x}_{diff}-\mu_{diff-null}}{\frac{S_d}{\sqrt{n}}}$$
+  
+In other words, the procedure is exactly the same as the comparison between a sample mean vs population mean except that the variable of interest is a difference rather than a mean. The formula for the t-statistic is our point estimate minus the value of the parameter of interest under the null hypothesis divided by the standard error of the sample.
+  
+### t-test
+  
+```{r, echo = TRUE}
+
+happiness_diff <- mean(h_data$diff)
+paste("The average happiness difference is:",happiness_diff)
+
+
+t_stat_diff <- (mean(h_data$diff) - 0) / (sd(h_data$diff) / sqrt(length(h_data$diff)))
+paste("The normalised  (i.e. t-statistic) of the difference between happiness levels is:",t_stat_diff)
+
+
+two_sided_p_val <- 2 * pt(abs(t_stat), df = length(heights) - 1, lower.tail = FALSE)
+
+paste("The p-value (i.e. the probability of observing an equal or more extreme difference of happiness levels given the Null hypothesis being true is:", two_sided_p_val)
+
+
+```
+  
+From these results, given the p-value is smaller than 0.05, with a 95% confidence level we can reject the null hypothesis and say there's enough evidence to conclude that the mean level of happiness after stats class is greater than the mean level of happiness prior stats class. 
+
+## Unpaired Data
+
+Now, let's imagine we have two groups of students: one group which attended statistics class and one that didn't. Both groups have 10 students. We have recorded the average happiness levels for both groups and our data looks like so:
+
+```{r}
+
+no_stats <- c(12.2, 14.6, 13.4, 11.2, 12.7, 10.4, 15.8, 13.9, 9.5, 14.2)
+yes_stats <- c(13.5, 15.2, 13.6, 12.8, 13.7, 11.3, 16.5, 13.4, 8.7, 14.6)
+
+stats_exp_data <-
+  tibble(
+    no_stats = no_stats,
+    yes_stats = yes_stats
+  )
+
+kable(
+stats_exp_data %>% head,
+    "html") %>%
+  kable_styling(font_size = 10,
+                "striped") %>%
+  scroll_box(width="100%")
+
+```
+  
+The means of happiness of the groups and standard deviations are:
+
+```{r}
+kable(
+stats_exp_data %>%
+  pivot_longer(cols = c('no_stats','yes_stats'),
+               names_to = 'condition',
+               values_to = 'happiness_level') %>% 
+  group_by(condition) %>% 
+  summarise(
+    mean = mean(happiness_level),
+    sd = sd(happiness_level),
+    n=n()
+  ),"html") %>%
+  kable_styling(font_size = 10,
+                "striped") %>%
+  scroll_box(width="100%")
+
+```
+
+If we wanted to estimate the difference between these means which are independent we would use a point estimate +- a margin of error:
+
+$$\overline{x_{1}} - \overline{x_{2}} \pm t_{df}SE_{\overline{x_{1}} - \overline{x_{2}}}$$
+The Standard Error of a difference can be calculated as:
+  
+$$SE_{\overline{x_{1}} - \overline{x_{2}}} = \sqrt{\frac{s^{2}_{1}}{n_{1}} + \frac{s^{2}_{2}}{n_{2}}}$$
+  
+The degrees of freedom for the t statistic for inference on two means can be calculated as:
+
+$$df = min(n_{1} -1, n_{2} - 1)$$
+Putting everything together:
+
+```{r}
+
+df = min(c(10-1, 10-1))
+standard_error = sqrt(((sd(stats_exp_data$no_stats)^2)/10) + ((sd(stats_exp_data$yes_stats)^2)/10))
+
+upper_threshold <- mean(stats_exp_data$no_stats) - mean(stats_exp_data$yes_stats) + (qt(0.025, df = df, lower.tail = F) * standard_error)
+
+lower_threshold <- mean(stats_exp_data$no_stats) - mean(stats_exp_data$yes_stats) - (qt(0.025, df = df, lower.tail = F) * standard_error)
+
+paste("At a 95% confidence interval, we can say that the happiness difference between the group which takes statistics class and the group which doesn't falls between", lower_threshold, "and", upper_threshold)
+
+```
+
+### Hypothesis test:
+  
+Ho: There is no difference in mean happiness levels between students who take and do not take stats class
+H1: There is a difference in mean happiness levels between students who take and do not take stats class
+  
+```{r, echo = TRUE}
+
+mean_happiness_diff <- mean(stats_exp_data$no_stats) - mean(stats_exp_data$yes_stats)
+paste("The average happiness difference is:", mean_happiness_diff)
+
+
+t_stat_diff <- (mean_happiness_diff - 0) / standard_error
+paste("The normalised  (i.e. t-statistic) of the difference between happiness levels is:",t_stat_diff)
+
+
+two_sided_p_val <- 2 * pt(abs(t_stat_diff), df = df, lower.tail = FALSE)
+
+paste("The p-value (i.e. the probability of observing an equal or more extreme difference between the two groups is:", two_sided_p_val)
+
+```
+
+Therefore we fail to reject the null hypothesis given the p-value being larger than 0.05.
