@@ -12,15 +12,17 @@ output:
 ```{r echo = FALSE, message=FALSE}
 
 knitr::opts_chunk$set(warning = FALSE, eval = TRUE, results = TRUE, fig.show = "hold", message = FALSE)
+
 library(tidyverse)
 library(hrbrthemes)
 library(knitr)
 library(kableExtra)
+
 ```
 
 In this lab, you will learn how to perform single-sample hypothesis testing using Student's t-distribution. The t-distribution is a probability distribution that arises in hypothesis testing when the sample size is small or the population standard deviation is unknown.
 
-## Single Sample t-test
+## Single Sample t-test {.tabset}
 
 ### The data
 

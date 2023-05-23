@@ -1,0 +1,122 @@
+---
+title: "Workshop 1"
+Author: "Chucho"
+output:
+  html_document:
+    css: ../lab.css
+    highlight: pygments
+    theme: cerulean
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(warning = FALSE, eval = TRUE, results = TRUE, fig.show = "hold", message = FALSE)
+
+library(tidyverse)
+library(hrbrthemes)
+library(knitr)
+library(kableExtra)
+
+```
+
+## Preguntas {.tabset}
+
+### 3-84
+ 
+¿Qué reacción tendría usted si un aficionado al fútbol americano le dijera lo siguiente: “Los Raiders de Auckland tienen un promedio de 3.6 yardas de recorrido por tierra. Como sólo necesitan 10 yardas para anotar y tienen cuatro oportunidades para lograrlo, la anotación es segura, siempre y cuando mantengan su forma de jugar por tierra.”?
+  
+```{r}
+
+pronosticador_auckland <- function(media, ds, intentos){
+  
+  ofensivas_auckland <- list()
+
+  for (bootstrap in 1:1000){
+    
+    ofensivas_auckland[[bootstrap]] <- 
+      rnorm(intentos, 
+          mean = media, 
+          sd = ds)
+  }
+ 
+  return(ofensivas_auckland)
+
+}
+
+pronosticos_bootstrap <- list()
+
+for (ds in 1:10){
+  
+  pronosticos_bootstrap[[ds]] <-  
+    pronosticador_auckland(media = 3.6,
+                           ds = ds,
+                           intentos = 4)
+}
+ 
+
+conteos = list()
+
+for(sd in 1:10){
+  
+   counter = 0
+   conteos[[sd]] = list()
+   
+  for(boot_sample in pronosticos_bootstrap[[sd]]){
+    
+    conteos[[sd]][counter] <- ifelse(sum(boot_sample) > 10, T, F)
+    
+    counter = counter + 1
+  }
+   
+   print(paste("El porcentaje de anotacionaes en un juego de mil ofensivas que se distribuyen normalmente con desviacion estandar igual a", sd, "es", sum(unlist(conteos[[sd]])) / length(unlist(conteos[[sd]]))))
+   
+}
+
+
+
+```
+```{r}
+
+library(tidyverse)
+library(hrbrthemes)
+
+df <- 
+  as_tibble(
+    cbind(conteos[[1]],
+          conteos[[2]],
+          conteos[[3]],
+          conteos[[4]],
+          conteos[[5]],
+          conteos[[6]],
+          conteos[[7]],
+          conteos[[8]],
+          conteos[[9]],
+          conteos[[10]]) ,
+    .name_repair = 'universal'
+  ) %>% 
+    map_dfc(.,
+        unlist)
+
+names(df) <- c('sd_1','sd_2','sd_3', 'sd_4','sd_5','sd_6','sd_7','sd_8','sd_9','sd_10')
+
+df %>% 
+  pivot_longer(
+    cols = c('sd_1','sd_2','sd_3', 'sd_4','sd_5','sd_6','sd_7','sd_8','sd_9','sd_10'),
+    names_to = 'sd',
+    values_to = 'touchdown'
+  ) %>% 
+  ggplot(aes(sd, fill=touchdown)) +
+  geom_bar(stat="count", position = 'stack', colour = 'darkgrey', alpha=0.8) + 
+  theme_ipsum() +
+  theme(
+    legend.position = 'bottom',
+    legend.title = element_blank()
+  )
+
+```
+
+
+
+### Pregunta 2
