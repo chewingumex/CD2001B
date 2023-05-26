@@ -11,8 +11,7 @@ output:
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(eval = TRUE, 
-                      results = FALSE, 
-                      fig.show = "hide", 
+                      results = TRUE, 
                       message = FALSE, 
                       warning = FALSE)
 ```
@@ -87,7 +86,7 @@ It's also useful to be able to describe the relationship of two numerical variab
 Just as you've used the mean and standard deviation to summarize a single variable, you can summarize the relationship between these two variables by finding the line that best follows their association.
 Use the following interactive function to select the line that you think does the best job of going through the cloud of points.
 
-```{r plotss-expression-score, eval=FALSE}
+```{r plotss-expression-score, eval=TRUE}
 plot_ss(x = pf_expression_control, y = pf_score, data = hfi_2016)
 ```
 
@@ -114,7 +113,7 @@ $$
 The most common way to do linear regression is to select the line that minimizes the sum of squared residuals.
 To visualize the squared residuals, you can rerun the plot command and add the argument `showSquares = TRUE`.
 
-```{r plotss-expression-score-squares, eval=FALSE}
+```{r plotss-expression-score-squares}
 plot_ss(x = pf_expression_control, y = pf_score, data = hfi_2016, showSquares = TRUE)
 ```
 
