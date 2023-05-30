@@ -2,13 +2,18 @@ library(tidyverse)
 library(readxl)
 library(hrbrthemes)
 
-no_donaciones <- read_excel('~/Documents/CD2001B/reto/Datos Encuesta sobre no donaciones.xlsx', sheet = 'Datos sin procesar')
+# leer el xlsx
+no_donaciones <- read_excel(
+  '~/Documents/CD2001B/reto/Datos Encuesta sobre no donaciones.xlsx', 
+  sheet = 'Datos sin procesar')
 
 
-# quitar todas las variables que no sirven
+# quitar todas las {variables} que no sirven
 no_donaciones <- 
 no_donaciones %>% 
-  select(-`Seq. Número`,
+  select(
+         -`Estado de respuesta`,
+         -`Seq. Número`,
          -`Referencia externa`, 
          -`Tiempo necesario para completar (segundos)`,
          - Duplicar,
@@ -16,7 +21,8 @@ no_donaciones %>%
          -`Estado de respuesta`,
          -`Lista de correo`,
          -`Correo electrónico del encuestado`,
-         -starts_with("Variable personalizada"))
+         - starts_with("Variable personalizada")
+         )
 
 
 # quitar espacios en blanco al final de los nombres de las variables... neta....
@@ -74,13 +80,13 @@ no_donaciones %>%
 no_donaciones %>%
   select(donador_pasado,
          starts_with('razonesno')) %>% 
-  pivot_longer(names_transform = ~ str_remove(., 'razonesno_'),
-               cols = starts_with('razonesno'),
+  pivot_longer(cols = starts_with('razonesno'),
                names_to = 'razon no donar',
-               values_to = 'donante'
-               ) %>%
-  drop_na(donante) %>% 
-  ggplot(aes(donante, group = `razon no donar`, fill = `razon no donar`)) +
+               values_to = 'respuesta',
+               names_transform = ~ str_remove(., 'razonesno_')
+               ) %>% 
+  drop_na(respuesta) %>% 
+  ggplot(aes(respuesta, group = `razon no donar`, fill = `razon no donar`)) +
   geom_bar(stat = 'count', 
            position = 'dodge',
            alpha=0.7) +
